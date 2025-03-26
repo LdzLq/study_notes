@@ -1,23 +1,41 @@
-# Pytest测试框架
-### 一、pytest基本规则
-* **测试用例文件(.py文件)要以test_开头或_test结尾**
-* **测试用例类必须以Test开头，且不能有init方法**
-* **测试用例以test_开头，一个测试用例类下面，可以存在多个测试用例**
-* **断言使用pytest原生assert**
-### 二、pytest常用参数
-1. `-s`参数：可以在终端打印调试信息
+## Pytest学习总结
+### 一、pytest测试用例编写规范：
+* 测试用例文件是`test_*.py` 或者 `*_test.py`格式
+* 测试函数/方法，以`test_`开头，不放在类中也可以；
+* 放在类中，测试用例类以`Test`开头，且不能有`__init__`方法
+* 自带断言`assert`，无需导入任何断言库
+    * 使用`== 、 != 、< 、 > 、>= 、<=`
+    * 使用`in`和`not in`测试包含与不包含  
+    * 使用`true`和`false`
+
+### 二、pytest命令行参数
+实例代码：
 ```
 # test_pytest_m.py
+
 class TestPytest():
-       def test_bing(self):
-            print("bing","http://cn.bing.com")
+
+    @pytest.mark.bing
+    def test_bing(self):
+        print("bing","http://cn.bing.com")
+    
+    @pytest.mark.bing
+    def test_baidu(self):
+        print("baidu","http://www.baidu.com")
+
 ```
+
+1. `-s`参数：可以在终端打印输出内容
 ```
-pytest  -s testcase/test_pytest_m.py  # 可以打印出print输出内容
+pytest -s testcase/test_pytest_m.py  # 可以打印出print输出内容
 ```
 2. `-m`参数：只运行被标记的参数
     1. 如何标记？测试用例打标记: `@pytest.mark.标记名`
     2. 如何执行打标记的测试用例？`pytest -m "标记名"  `
+```
+pytest -m bing
+```
+
 3. `-k`参数：模糊匹配文件名、类名、方法名，执行匹配到的方法  
 ```
  pytest -k 模糊匹配值
@@ -31,42 +49,28 @@ pytest -s -v -k 模糊匹配值
 pytest testcases --collect-only
 ```
 6. `-q`参数：打印简洁的执行信息
-### 三、pytest断言  
-* 使用"== 、 != 、< 、 > 、>= 、<=”
-* 使用in和not in 测试包含与不包含  
-* 使用true和false
 ```
-class TestAssert:
-    def test_assert(self):
-        # ==,!=,<,>,<=,>=
-        assert "dd" == "dd"
-        assert "aa" != "bb"
-        assert 0 < 1
-        assert 2 > 1
-        assert 3 <= 7 - 2
-        assert 4 >= 1 + 2
-        # 包含和不包含
-        assert "测开" in "从测试到测开"
-        assert "java" not in "从测试到测开"
-        # true和false
-        assert 1
-        assert (9<10) is True
-        assert not False
+pytest -q testcases/test_pytest.py
 ```
-### pytest精髓一：fixture
-fixture的作用：可以将一个通用函数和其返回值，作为测试用例入参使用
-    1. 使用方法：
-```
-@pytest.fixture()
-def demo(self):
-    print("执行测试用例")
-    return 1
-``` 
-    2. 作用范围  
-    session级别：这个级别会结合conftest.py文件使用  
-    module级别：模块里所有的测试用例执行前只执行一次module级别的fixture  
-    class级别：每个类执行前都会执行一次class级别的fixture  
-    function级别：默认的函数级别，每个测试用例执行前都会执行一次function级别的fixture
+
+### pytest之fixture函数
+1. 作用：fixture是pytest内置的一个装饰器，`@pytest.fixture`被用来定义一个测试用例执行前要做的准备工作
+2. 特点：
+    * fixture函数有scope范围：`function`, `class`,`module`, `package`, `session`，默认是function级别
+        * function级别：每个测试用例执行前都会执行一次function级别的fixture  
+        * class级别：每个测试类执行前都只会执行一次class级别的fixture  
+        * module级别：每个模块执行前都只会执行一次module级别的fixture  
+        * package级别：整个包执行前都只会执行一次package级别的fixture  
+        * session级别：整个测试会话执行前都只会执行一次session级别的fixture  
+    * fixture函数可以有返回值，测试用例可以直接使用返回值
+    * fixture函数可以有传入参数，测试用例可以直接传参
+    * fixture函数可以有多个，测试用例可以传入多个fixture参数
+    * fixture函数可以给测试用例提供参数，也可以给其他fixture函数提供参数
+    * fixture函数可以单独放在一个文件`conftest.py`中，也可以放在多个文件中
+3. 实现Teardown/Cleanup功能：
+    * 使用`yield`关键字，在fixture函数中使用`yield`可以实现teardown/cleanup功能
+
+
 ### pytest精髓二：conftest  
 1. conftest是可以跨文件使用的，也就是当前这个testcases目录下，每一个测试用例文件，都可以使用conftest
 2. conftest.py这个文件名是固定的，不能更改
