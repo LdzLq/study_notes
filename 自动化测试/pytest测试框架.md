@@ -67,13 +67,52 @@ pytest -q testcases/test_pytest.py
     * fixture函数可以有多个，测试用例可以传入多个fixture参数
     * fixture函数可以给测试用例提供参数，也可以给其他fixture函数提供参数
     * fixture函数可以单独放在一个文件`conftest.py`中，也可以放在多个文件中
+    * 同名的fixture函数，在当前目录下，后面的fixture会覆盖前面的fixture
 3. 实现Teardown/Cleanup功能：
     * 使用`yield`关键字，在fixture函数中使用`yield`可以实现teardown/cleanup功能
+        * 使用yield的fixture函数，销毁顺序是后进先出（类似于数据类型栈Stack），意思是：**最后执行的fixture，它的yield内容先运行**
+    * 使用`request.addfinalizer()`方法，在fixture函数中使用`request.addfinalizer(lambda: 清理代码)`可以实现teardown/cleanup功能
+        * 使用`request.addfinalizer()`的fixture函数，销毁顺序是先进先出（类似于数据类型队列Queue），意思是：**最先执行的fixture，它的清理代码最后运行**
+4. fixture函数传入参数`request`，作用是可以获取与测试会话和参数化相关的信息，不可以用在用例函数中
 
 
-### pytest精髓二：conftest  
+### pytest之conftest文件
 1. conftest是可以跨文件使用的，也就是当前这个testcases目录下，每一个测试用例文件，都可以使用conftest
 2. conftest.py这个文件名是固定的，不能更改
 3. 用例使用conftest有一个默认原则，离哪个conftest最近就使用哪个一个。如果某个用例的同级目录有conftest，就使用这个conftest。同级目录没有conftest时，就往上级目录找最近的一个conftest
-4. conftest不能被其他文件导入
+4. conftest不能被其他文件导入，意思是测试用例会自动识别并加载conftest文件，不用特别导入
 5. conftest可以设置很多pytest内置的一些钩子方法
+
+### pytest之参数化
+用例参数化的两种方法：  
+1. `pytest.fixture()`可以设置参数化，
+`@pytest.fixture(params=[1,2,3], ids=['a','b','c'])，params是参数列表，ids是参数的别名`
+
+2. 使用`@pytest.mark.parametrize()`装饰器
+    * 参数化单个函数：
+    ```
+    @pytest.mark.parametrize("test_input,expected", [("3+5", 8), ("2+4", 6), ("6*9", 42)])
+    def test_eval(test_input, expected):
+        assert eval(test_input) == expected
+    ```
+    * 参数化单个类：
+    ```
+    @pytest.mark.parametrize("n,expected", [(1, 2), (3, 4)])
+    class TestClass:
+        def test_simple_case(self, n, expected):
+            assert n + 1 == expected
+
+        def test_weird_simple_case(self, n, expected):
+            assert (n * 1) + 1 == expected
+    ```
+    * 参数化多个函数：
+    ```
+    pytestmark = pytest.mark.parametrize("n,expected", [(1, 2), (3, 4)])
+
+    class TestClass:
+        def test_simple_case(self, n, expected):
+            assert n + 1 == expected
+
+        def test_weird_simple_case(self, n, expected):
+            assert (n * 1) + 1 == expected
+    ```
